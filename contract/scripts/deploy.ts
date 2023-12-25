@@ -4,11 +4,11 @@ const main = async () => {
   const accountBalance = await deployer.provider.getBalance(deployer.address);
   const alarmContractFactory = await ethers.getContractFactory("OKIDOKY");
   const alarmContract = await alarmContractFactory.deploy();
-  const ethAlarm = await alarmContract.waitForDeployment();
+  const okidoky = await alarmContract.waitForDeployment();
 
   console.log("Deploying contracts with account:", deployer.address);
   console.log("Account balance:", accountBalance.toString());
-  const deployedContractAddress = await ethAlarm.getAddress();
+  const deployedContractAddress = await okidoky.getAddress();
   console.log("Contract deployed to:", deployedContractAddress);
   console.log("Contract deployed by:", deployer.address);
 };

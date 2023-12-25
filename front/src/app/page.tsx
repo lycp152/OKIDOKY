@@ -36,10 +36,12 @@ export default function Home() {
   console.log("currentAccount: ", currentAccount);
   /* ユーザーのメッセージを保存するために使用する状態変数 */
   const [messageValue, setMessageValue] = useState<string>("");
-  const [latestAlarm, setLatestAlarm] = useState<Alarm | null>(null);
+  const [alarmHistory, setAlarmHistory] = useState<
+    { address: any; timestamp: Date; message: any }[]
+  >([]);
 
   /* デプロイされたコントラクトのアドレスを保持する変数 */
-  const contractAddress = "0x9841CD0E43709D8C69a7b3B10dA6A814A6Fd848a";
+  const contractAddress = "0xc7137a1D709e47a3891b985246fdb6d42CbbAeFc";
   /* ABIの内容を参照する変数 */
   const contractABI = abi.abi;
 
@@ -83,7 +85,7 @@ export default function Home() {
     }
   };
 
-  /* ABIを読み込み、コントラクトにAlarmを書き込む */
+  /* ABIを読み込み、コントラクトに送金する（まだ途中） */
   const writeAlarm = async () => {
     try {
       const { ethereum } = window as any;
@@ -91,13 +93,13 @@ export default function Home() {
         const provider = new ethers.BrowserProvider(ethereum);
         const signer = await provider.getSigner();
         /* ABIを参照する */
-        const ethAlarmContract = new ethers.Contract(
+        const okidokyContract = new ethers.Contract(
           contractAddress,
           contractABI,
           signer
         );
         /* コントラクトにAlarmを書き込む */
-        const alarmTxn = await ethAlarmContract.writeAlarm(messageValue, {
+        const alarmTxn = await okidokyContract.writeAlarm(messageValue, {
           gasLimit: 300000,
         });
         console.log("Mining...", alarmTxn.hash);
@@ -111,30 +113,32 @@ export default function Home() {
     }
   };
 
-  const getLatestAlarm = async () => {
+  const getAlarmHistory = async () => {
     const { ethereum } = window as any;
     try {
       if (ethereum) {
         const provider = new ethers.BrowserProvider(ethereum);
         const signer = await provider.getSigner();
-        const ethAlarmContract = new ethers.Contract(
+        const okidokyContract = new ethers.Contract(
           contractAddress,
           contractABI,
           signer
         );
 
-        /* コントラクトからgetLatestAlarmメソッドを呼び出す */
-        const alarm = await ethAlarmContract.getLatestAlarm();
+        /* コントラクトからgetAlarmHistoryメソッドを呼び出す */
+        const alarms = await okidokyContract.getAlarmHistory();
 
         /* UIに必要なのは、アドレス、タイムスタンプ、メッセージだけなので、以下のように設定する */
-        const newLatestAlarm: Alarm = {
-          address: alarm.alarmer,
-          timestamp: new Date(Number(alarm.timestamp) * 1000),
-          message: alarm.message,
-        };
+        const newAlarmHistory = alarms.map((alarm: Alarm, index: number) => {
+          return {
+            address: alarms.user,
+            timestamp: new Date(Number(alarms.timestamp) * 1000),
+            message: alarms.message,
+          };
+        });
 
         /* React Stateにデータを格納する */
-        setLatestAlarm(newLatestAlarm);
+        setAlarmHistory(newAlarmHistory);
       } else {
         console.log("Ethereum object doesn't exist!");
       }
@@ -146,35 +150,47 @@ export default function Home() {
   useEffect(() => {
     (async () => {
       checkIfWalletIsConnected();
-      let ethAlarmContract: ethers.Contract;
+      let okidokyContract: ethers.Contract;
 
-      const onNewAlarm = (from: string, timestamp: number, message: string) => {
+      const onAlarmStop = (
+        from: string,
+        timestamp: number,
+        message: string
+      ) => {
         console.log("NewAlarm", from, timestamp, message);
+        setAlarmHistory((prevState) => [
+          ...prevState,
+          {
+            address: from,
+            timestamp: new Date(timestamp * 1000),
+            message: message,
+          },
+        ]);
       };
 
-      /* NewAlarmイベントがコントラクトから発信されたときに、情報を受け取る */
+      /* AlarmStopイベントがコントラクトから発信されたときに、情報を受け取る */
       if ((window as any).ethereum) {
         const provider = new ethers.BrowserProvider((window as any).ethereum);
         const signer = await provider.getSigner();
 
-        ethAlarmContract = new ethers.Contract(
+        okidokyContract = new ethers.Contract(
           contractAddress,
           contractABI,
           signer
         );
-        ethAlarmContract.on("NewAlarm", onNewAlarm);
+        okidokyContract.on("AlarmStop", onAlarmStop);
       }
 
-      /* メモリリークを防ぐために、NewAlarmのイベントを解除する */
+      /* メモリリークを防ぐために、AlarmStopのイベントを解除する */
       return () => {
-        if (ethAlarmContract) {
-          ethAlarmContract.off("NewAlarm", onNewAlarm);
+        if (okidokyContract) {
+          okidokyContract.off("AlarmStop", onAlarmStop);
         }
       };
     })();
   }, [contractAddress, contractABI]);
 
-  const isExistLogs = currentAccount && latestAlarm;
+  const isExistLogs = currentAccount && alarmHistory;
 
   return (
     <div className="flex min-h-full flex-col justify-center px-6 py-12 lg:px-8">
@@ -243,14 +259,19 @@ export default function Home() {
         {/* 履歴を表示する */}
         {isExistLogs && (
           <div className="py-3 px-4 block w-full border-gray-200 rounded-lg dark:bg-slate-900 dark:border-gray-700 dark:text-gray-100">
-            <div>
-              <AlarmDetails title="Address" value={latestAlarm.address} />
-              <AlarmDetails
-                title="Time🦴🐕💨"
-                value={latestAlarm.timestamp.toString()}
-              />
-              <AlarmDetails title="Message" value={latestAlarm.message} />
-            </div>
+            {alarmHistory
+              .slice(0)
+              .reverse()
+              .map((alarm, index) => (
+                <div key={index}>
+                  <AlarmDetails title="Address" value={alarm.address} />
+                  <AlarmDetails
+                    title="Time🦴🐕💨"
+                    value={alarm.timestamp.toString()}
+                  />
+                  <AlarmDetails title="Message" value={alarm.message} />
+                </div>
+              ))}
           </div>
         )}
       </div>

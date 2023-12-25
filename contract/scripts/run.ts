@@ -18,8 +18,8 @@ const main = async () => {
     .writeAlarm("Another message!");
   await alarmTxn.wait(); // トランザクションが承認されるのを待つ（テスト:2回目）
 
-  let latestAlarm = await alarmContract.getLatestAlarm();
-  console.log(latestAlarm);
+  let alarmHistory = await alarmContract.getAlarmHistory();
+  console.log(alarmHistory);
 };
 
 const runMain = async () => {
