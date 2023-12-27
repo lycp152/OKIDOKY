@@ -209,7 +209,7 @@ export default function Home() {
           OKIDOKY⏰
         </h1>
         <div className="bio mt-2 mb-8">
-          イーサリアムウォレットを接続して、アラームを設定。時間通りに起きられたら0.0001ETHがもらえます。起きられなかった場合、0.0001ETHをプールします。
+          ウォレットを接続して、ETHの金額とアラームを設定。時間通りに起きられたら2倍のETHが帰ってきます。起きられなかった場合、設定したETHの金額はプールされます。
         </div>
       </div>
 
@@ -241,8 +241,9 @@ export default function Home() {
               {/* ETH金額入力フィールド */}
               <input
                 type="number"
-                step="0.0001" // ETHの単位に合わせて調整
-                min="0" // 0未満の値が入力できないように設定
+                step="0.0001"
+                min="0.0001"
+                max="0.04"
                 placeholder="金額を入力してください"
                 name="ethAmount"
                 id="ethAmount"
@@ -270,21 +271,54 @@ export default function Home() {
         {/* 履歴を表示する */}
         {isExistLogs && (
           <div className="py-3 px-4 block w-full border-gray-200 rounded-lg dark:bg-slate-900 dark:border-gray-700 dark:text-gray-100">
-            {alarmHistory
-              .slice(0)
-              .reverse()
-              .map((alarm, index) => {
-                return (
-                  <div key={index}>
-                    <AlarmDetails title="Address" value={alarm.address} />
-                    <AlarmDetails
-                      title="Time🦴🐕💨"
-                      value={alarm.timestamp.toString()}
-                    />
-                    <AlarmDetails title="Message" value={alarm.message} />
-                  </div>
-                );
-              })}
+            <div className="-m-1.5 overflow-x-auto">
+              <div className="p-1.5 min-w-full inline-block align-middle">
+                <div className="overflow-hidden">
+                  <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                    <thead>
+                      <tr>
+                        <th
+                          scope="col"
+                          className="px-6 py-3 text-start text-xs font-medium text-gray-500 uppercase"
+                        >
+                          アドレス
+                        </th>
+                        <th
+                          scope="col"
+                          className="px-6 py-3 text-start text-xs font-medium text-gray-500 uppercase"
+                        >
+                          タイムスタンプ
+                        </th>
+                        <th
+                          scope="col"
+                          className="px-6 py-3 text-start text-xs font-medium text-gray-500 uppercase"
+                        >
+                          メッセージ
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                      {alarmHistory
+                        .slice(0)
+                        .reverse()
+                        .map((alarm, index) => (
+                          <tr key={index}>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-800 dark:text-gray-200">
+                              {alarm.address}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800 dark:text-gray-200">
+                              {alarm.timestamp.toLocaleString()}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800 dark:text-gray-200">
+                              {alarm.message}
+                            </td>
+                          </tr>
+                        ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
           </div>
         )}
       </div>
