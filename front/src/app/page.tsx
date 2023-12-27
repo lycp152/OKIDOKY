@@ -41,29 +41,52 @@ export default function Home() {
   >([]);
 
   /* デプロイされたコントラクトのアドレスを保持する変数 */
-  const contractAddress = "0xc7137a1D709e47a3891b985246fdb6d42CbbAeFc";
+  const contractAddress = "0xd8D86d6E6Fcab058b273FFc80a30e4874e9d0de6";
   /* ABIの内容を参照する変数 */
   const contractABI = abi.abi;
 
-  const checkIfWalletIsConnected = async () => {
-    /* window.ethereumにアクセスできることを確認する */
-    /* 'ethereum' プロパティの型情報がないため any を使用する */
-    const { ethereum } = window as any;
-    if (!ethereum) {
-      console.log("Make sure you have MetaMask!");
-    } else {
-      console.log("We have the ethereum object", ethereum);
-    }
-    /* ユーザーのウォレットへのアクセスが許可されているか確認する */
-    const accounts = await ethereum.request({ method: "eth_accounts" });
-    if (accounts.length !== 0) {
-      const account = accounts[0];
-      console.log("Found an authorized account:", account);
-      setCurrentAccount(account);
-    } else {
-      console.log("No authorized account found");
-    }
-  };
+  useEffect(() => {
+    (async () => {
+      let okidokyContract: ethers.Contract;
+
+      const onAlarmStop = (
+        from: string,
+        timestamp: number,
+        message: string
+      ) => {
+        console.log("NewAlarm", from, timestamp, message);
+        setAlarmHistory((prevState) => [
+          ...prevState,
+          {
+            address: from,
+            timestamp: new Date(Number(timestamp) * 1000),
+            message: message,
+          },
+        ]);
+      };
+
+      /* AlarmStopイベントがコントラクトから発信されたときに、情報を受け取る */
+      if (currentAccount === "" || !currentAccount) return;
+      if ((window as any).ethereum) {
+        const provider = new ethers.BrowserProvider((window as any).ethereum);
+        const signer = await provider.getSigner();
+
+        okidokyContract = new ethers.Contract(
+          contractAddress,
+          contractABI,
+          signer
+        );
+        okidokyContract.on("AlarmStop", onAlarmStop);
+      }
+
+      /* メモリリークを防ぐために、AlarmStopのイベントを解除する */
+      return () => {
+        if (okidokyContract) {
+          okidokyContract.off("AlarmStop", onAlarmStop);
+        }
+      };
+    })();
+  }, [currentAccount, contractABI]);
 
   const connectWallet = async () => {
     try {
@@ -113,82 +136,68 @@ export default function Home() {
     }
   };
 
-  const getAlarmHistory = async () => {
-    const { ethereum } = window as any;
-    try {
-      if (ethereum) {
-        const provider = new ethers.BrowserProvider(ethereum);
-        const signer = await provider.getSigner();
-        const okidokyContract = new ethers.Contract(
-          contractAddress,
-          contractABI,
-          signer
-        );
-
-        /* コントラクトからgetAlarmHistoryメソッドを呼び出す */
-        const alarms = await okidokyContract.getAlarmHistory();
-
-        /* UIに必要なのは、アドレス、タイムスタンプ、メッセージだけなので、以下のように設定する */
-        const newAlarmHistory = alarms.map((alarm: Alarm, index: number) => {
-          return {
-            address: alarms.user,
-            timestamp: new Date(Number(alarms.timestamp) * 1000),
-            message: alarms.message,
-          };
-        });
-
-        /* React Stateにデータを格納する */
-        setAlarmHistory(newAlarmHistory);
-      } else {
-        console.log("Ethereum object doesn't exist!");
-      }
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
   useEffect(() => {
-    (async () => {
-      checkIfWalletIsConnected();
-      let okidokyContract: ethers.Contract;
-
-      const onAlarmStop = (
-        from: string,
-        timestamp: number,
-        message: string
-      ) => {
-        console.log("NewAlarm", from, timestamp, message);
-        setAlarmHistory((prevState) => [
-          ...prevState,
-          {
-            address: from,
-            timestamp: new Date(timestamp * 1000),
-            message: message,
-          },
-        ]);
-      };
-
-      /* AlarmStopイベントがコントラクトから発信されたときに、情報を受け取る */
-      if ((window as any).ethereum) {
-        const provider = new ethers.BrowserProvider((window as any).ethereum);
-        const signer = await provider.getSigner();
-
-        okidokyContract = new ethers.Contract(
-          contractAddress,
-          contractABI,
-          signer
-        );
-        okidokyContract.on("AlarmStop", onAlarmStop);
-      }
-
-      /* メモリリークを防ぐために、AlarmStopのイベントを解除する */
-      return () => {
-        if (okidokyContract) {
-          okidokyContract.off("AlarmStop", onAlarmStop);
+    const checkIfWalletIsConnected = async () => {
+      /* window.ethereumにアクセスできることを確認する */
+      /* 'ethereum' プロパティの型情報がないため any を使用する */
+      try {
+        const { ethereum } = window as any;
+        if (!ethereum) {
+          console.log("Make sure you have MetaMask!");
+        } else {
+          console.log("We have the ethereum object", ethereum);
         }
-      };
-    })();
-  }, [contractAddress, contractABI]);
+        /* ユーザーのウォレットへのアクセスが許可されているか確認する */
+        const accounts = await ethereum.request({ method: "eth_accounts" });
+        if (accounts.length !== 0) {
+          const account = accounts[0];
+          console.log("Found an authorized account:", account);
+          setCurrentAccount(account);
+          getAlarmHistory();
+        } else {
+          console.log("No authorized account found");
+        }
+      } catch (error) {
+        console.log(error);
+      }
+    };
+
+    const getAlarmHistory = async () => {
+      const { ethereum } = window as any;
+      try {
+        if (ethereum) {
+          const provider = new ethers.BrowserProvider(ethereum);
+          const signer = await provider.getSigner();
+          const okidokyContract = new ethers.Contract(
+            contractAddress,
+            contractABI,
+            signer
+          );
+
+          /* コントラクトからgetAlarmHistoryメソッドを呼び出す */
+          const alarms = await okidokyContract.getAlarmHistory();
+
+          /* UIに必要なのは、アドレス、タイムスタンプ、メッセージだけなので、以下のように設定する */
+          const newAlarmHistory = alarms.map((alarm: Alarm, index: number) => {
+            return {
+              address: alarm.address,
+              timestamp: new Date(Number(alarm.timestamp) * 1000),
+              message: alarm.message,
+            };
+          });
+
+          /* React Stateにデータを格納する */
+          setAlarmHistory(newAlarmHistory);
+        } else {
+          console.log("Ethereum object doesn't exist!");
+        }
+      } catch (error) {
+        console.log(error);
+      }
+    };
+
+    checkIfWalletIsConnected();
+  }, [contractABI]);
 
   const isExistLogs = currentAccount && alarmHistory;
 
@@ -205,20 +214,6 @@ export default function Home() {
       </div>
 
       <div className="sm:mx-auto sm:w-full sm:max-w-lg space-y-6">
-        <div>
-          {/* メッセージボックス */}
-          {currentAccount && (
-            <textarea
-              placeholder="メッセージはこちら"
-              name="messageArea"
-              id="message"
-              value={messageValue}
-              onChange={(e) => setMessageValue(e.target.value)}
-              className="py-3 px-4 block w-full border-gray-200 rounded-lg text-sm focus:border-blue-500 focus:ring-blue-500 disabled:opacity-50 disabled:pointer-events-none dark:bg-slate-900 dark:border-gray-700 dark:text-gray-400 dark:focus:ring-gray-600"
-            />
-          )}
-        </div>
-
         {/* ウォレットを接続するボタン */}
         {!currentAccount && (
           <button
@@ -242,18 +237,34 @@ export default function Home() {
         {/* コントラクトに書き込むボタン */}
         {currentAccount && (
           <>
+            <div className="flex items-center">
+              {/* ETH金額入力フィールド */}
+              <input
+                type="number"
+                step="0.0001" // ETHの単位に合わせて調整
+                min="0" // 0未満の値が入力できないように設定
+                placeholder="金額を入力してください"
+                name="ethAmount"
+                id="ethAmount"
+                value={messageValue}
+                onChange={(e) => setMessageValue(e.target.value)}
+                className="py-3 px-4 block w-full border-gray-200 rounded-lg text-sm focus:border-blue-500 focus:ring-blue-500 disabled:opacity-50 disabled:pointer-events-none dark:bg-slate-900 dark:border-gray-700 dark:text-gray-400 dark:focus:ring-gray-600"
+              />
+              {/* ETHの単位を表示 */}
+              <span className="ml-2 text-sm text-gray-500">ETH</span>
+            </div>
+            <input
+              type="time"
+              // value={alarmTime}
+              // onChange={(e) => setAlarmTime(e.target.value)}
+              className="py-3 px-4 block border-gray-200 rounded-lg text-5xl focus:border-blue-500 focus:ring-blue-500 disabled:opacity-50 disabled:pointer-events-none dark:bg-slate-900 dark:border-gray-700 dark:text-gray-400 dark:focus:ring-gray-600"
+            />
             <button
               className={`${buttonStyle} bg-indigo-600 text-white hover:bg-indigo-500 focus-visible:outline-indigo-600`}
               onClick={writeAlarm}
             >
               Set Alarm⏰
             </button>
-            <input
-              type="time"
-              // value={alarmTime}
-              // onChange={(e) => setAlarmTime(e.target.value)}
-              className="py-3 px-4 block border-gray-200 rounded-lg text-5xl focus:border-blue-500 focus:ring-blue-500 disabled:opacity-50 disabled:pointer-events-none dark:bg-slate-900 dark:border-gray-700  dark:text-gray-400 dark:focus:ring-gray-600"
-            />
           </>
         )}
         {/* 履歴を表示する */}
@@ -262,16 +273,18 @@ export default function Home() {
             {alarmHistory
               .slice(0)
               .reverse()
-              .map((alarm, index) => (
-                <div key={index}>
-                  <AlarmDetails title="Address" value={alarm.address} />
-                  <AlarmDetails
-                    title="Time🦴🐕💨"
-                    value={alarm.timestamp.toString()}
-                  />
-                  <AlarmDetails title="Message" value={alarm.message} />
-                </div>
-              ))}
+              .map((alarm, index) => {
+                return (
+                  <div key={index}>
+                    <AlarmDetails title="Address" value={alarm.address} />
+                    <AlarmDetails
+                      title="Time🦴🐕💨"
+                      value={alarm.timestamp.toString()}
+                    />
+                    <AlarmDetails title="Message" value={alarm.message} />
+                  </div>
+                );
+              })}
           </div>
         )}
       </div>
