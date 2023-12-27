@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 
 /* ABIファイルを含むOkidoky.jsonファイルをインポートする */
 import abi from "./utils/Okidoky.json";
+import { HistoryContainer } from "@/feature/history/HistoryContainer";
 
 interface Alarm {
   address: string;
@@ -44,49 +45,6 @@ export default function Home() {
   const contractAddress = "0xd8D86d6E6Fcab058b273FFc80a30e4874e9d0de6";
   /* ABIの内容を参照する変数 */
   const contractABI = abi.abi;
-
-  useEffect(() => {
-    (async () => {
-      let okidokyContract: ethers.Contract;
-
-      const onAlarmStop = (
-        from: string,
-        timestamp: number,
-        message: string
-      ) => {
-        console.log("NewAlarm", from, timestamp, message);
-        setAlarmHistory((prevState) => [
-          ...prevState,
-          {
-            address: from,
-            timestamp: new Date(Number(timestamp) * 1000),
-            message: message,
-          },
-        ]);
-      };
-
-      /* AlarmStopイベントがコントラクトから発信されたときに、情報を受け取る */
-      if (currentAccount === "" || !currentAccount) return;
-      if ((window as any).ethereum) {
-        const provider = new ethers.BrowserProvider((window as any).ethereum);
-        const signer = await provider.getSigner();
-
-        okidokyContract = new ethers.Contract(
-          contractAddress,
-          contractABI,
-          signer
-        );
-        okidokyContract.on("AlarmStop", onAlarmStop);
-      }
-
-      /* メモリリークを防ぐために、AlarmStopのイベントを解除する */
-      return () => {
-        if (okidokyContract) {
-          okidokyContract.off("AlarmStop", onAlarmStop);
-        }
-      };
-    })();
-  }, [currentAccount, contractABI]);
 
   const connectWallet = async () => {
     try {
@@ -199,8 +157,6 @@ export default function Home() {
     checkIfWalletIsConnected();
   }, [contractABI]);
 
-  const isExistLogs = currentAccount && alarmHistory;
-
   return (
     <div className="flex min-h-full flex-col justify-center px-6 py-12 lg:px-8">
       {/* ヘッダー */}
@@ -254,6 +210,7 @@ export default function Home() {
               {/* ETHの単位を表示 */}
               <span className="ml-2 text-sm text-gray-500">ETH</span>
             </div>
+            {/* アラームの時刻設定フィールド */}
             <input
               type="time"
               // value={alarmTime}
@@ -268,59 +225,13 @@ export default function Home() {
             </button>
           </>
         )}
-        {/* 履歴を表示する */}
-        {isExistLogs && (
-          <div className="py-3 px-4 block w-full border-gray-200 rounded-lg dark:bg-slate-900 dark:border-gray-700 dark:text-gray-100">
-            <div className="-m-1.5 overflow-x-auto">
-              <div className="p-1.5 min-w-full inline-block align-middle">
-                <div className="overflow-hidden">
-                  <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                    <thead>
-                      <tr>
-                        <th
-                          scope="col"
-                          className="px-6 py-3 text-start text-xs font-medium text-gray-500 uppercase"
-                        >
-                          アドレス
-                        </th>
-                        <th
-                          scope="col"
-                          className="px-6 py-3 text-start text-xs font-medium text-gray-500 uppercase"
-                        >
-                          タイムスタンプ
-                        </th>
-                        <th
-                          scope="col"
-                          className="px-6 py-3 text-start text-xs font-medium text-gray-500 uppercase"
-                        >
-                          メッセージ
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                      {alarmHistory
-                        .slice(0)
-                        .reverse()
-                        .map((alarm, index) => (
-                          <tr key={index}>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-800 dark:text-gray-200">
-                              {alarm.address}
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800 dark:text-gray-200">
-                              {alarm.timestamp.toLocaleString()}
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800 dark:text-gray-200">
-                              {alarm.message}
-                            </td>
-                          </tr>
-                        ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
+        <HistoryContainer
+          currentAccount={currentAccount}
+          contractAddress={contractAddress}
+          contractABI={contractABI}
+          alarmHistory={alarmHistory}
+          setAlarmHistory={setAlarmHistory}
+        />
       </div>
     </div>
   );
