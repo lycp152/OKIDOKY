@@ -5,7 +5,7 @@ type Props = {
   alarmHistory: { address: any; timestamp: Date; message: any }[];
 };
 
-export const HistoryContainer: FC<Props> = ({ isExistLogs, alarmHistory }) => {
+export const History: FC<Props> = ({ isExistLogs, alarmHistory }) => {
   return (
     <>
       {/* 履歴を表示する */}

@@ -1,12 +1,9 @@
 import React, { FC } from "react";
 import { buttonStyle } from "../../style/buttonStyle";
 
-type Props = { currentAccount: string; connectWallet: any };
+type Props = { currentAccount: string; connectWallet: () => void };
 
-export const ConnectWalletContainer: FC<Props> = ({
-  currentAccount,
-  connectWallet,
-}) => {
+export const ConnectWallet: FC<Props> = ({ currentAccount, connectWallet }) => {
   return (
     <>
       {/* ウォレットを接続するボタン */}

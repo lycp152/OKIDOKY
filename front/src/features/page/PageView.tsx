@@ -1,16 +1,16 @@
 "use client";
 import React, { FC } from "react";
-import { HistoryContainer } from "@/features/components/history/History";
-import { SetAlarmContainer } from "@/features/components/setAlarm/SetAlarm";
-import { ConnectWalletContainer } from "@/features/components/connectWallet/ConnectWallet";
+import { History } from "@/features/components/history/History";
+import { SetAlarm } from "@/features/components/setAlarm/SetAlarm";
+import { ConnectWallet } from "@/features/components/connectWallet/ConnectWallet";
 
 type Props = {
   currentAccount: string;
-  connectWallet: any;
-  messageValue: any;
-  setMessageValue: any;
-  writeAlarm: any;
-  isExistLogs: any;
+  connectWallet: () => void;
+  messageValue: string;
+  setMessageValue: React.Dispatch<React.SetStateAction<string>>;
+  writeAlarm: () => void;
+  isExistLogs: boolean;
   alarmHistory: { address: any; timestamp: Date; message: any }[];
 };
 
@@ -35,20 +35,17 @@ export const PageView: FC<Props> = ({
         </div>
       </div>
       <div className="sm:mx-auto sm:w-full sm:max-w-lg space-y-6">
-        <ConnectWalletContainer
+        <ConnectWallet
           currentAccount={currentAccount}
           connectWallet={connectWallet}
         />
-        <SetAlarmContainer
+        <SetAlarm
           currentAccount={currentAccount}
           messageValue={messageValue}
           setMessageValue={setMessageValue}
           writeAlarm={writeAlarm}
         />
-        <HistoryContainer
-          isExistLogs={isExistLogs}
-          alarmHistory={alarmHistory}
-        />
+        <History isExistLogs={isExistLogs} alarmHistory={alarmHistory} />
       </div>
     </div>
   );

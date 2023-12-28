@@ -3,12 +3,12 @@ import { buttonStyle } from "../../style/buttonStyle";
 
 type Props = {
   currentAccount: string;
-  messageValue: any;
-  setMessageValue: any;
-  writeAlarm: any;
+  messageValue: string;
+  setMessageValue: React.Dispatch<React.SetStateAction<string>>;
+  writeAlarm: () => void;
 };
 
-export const SetAlarmContainer: FC<Props> = ({
+export const SetAlarm: FC<Props> = ({
   currentAccount,
   messageValue,
   setMessageValue,

@@ -1,7 +1,6 @@
 "use client";
 import { ethers } from "ethers";
 import React, { useState, useEffect } from "react";
-
 import { PageView } from "./PageView";
 /* ABIファイルを含むOkidoky.jsonファイルをインポートする */
 import abi from "@/app/utils/OKIDOKY.json";
@@ -11,25 +10,6 @@ interface Alarm {
   timestamp: Date;
   message: string;
 }
-
-/* ボタンのスタイルをまとめた変数 */
-const buttonStyle =
-  "flex w-full justify-center rounded-md px-3 py-1.5 text-sm font-semibold leading-6 shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2";
-
-/* 履歴の詳細を表示するコンポーネント */
-interface AlarmDetailsProps {
-  title: string;
-  value: string;
-}
-
-const AlarmDetails: React.FC<AlarmDetailsProps> = ({ title, value }) => (
-  <div className="py-3 px-4 block w-full border-gray-200 rounded-lg dark:bg-slate-900 dark:border-gray-700 dark:text-gray-100">
-    <div>
-      <p className="font-semibold">{title}</p>
-      <p>{value}</p>
-    </div>
-  </div>
-);
 
 export default function PageContainer() {
   /* ユーザーのパブリックウォレットを保存するために使用する状態変数 */
@@ -209,7 +189,7 @@ export default function PageContainer() {
       messageValue={messageValue}
       setMessageValue={setMessageValue}
       writeAlarm={writeAlarm}
-      isExistLogs={isExistLogs}
+      isExistLogs={!!isExistLogs}
       alarmHistory={alarmHistory}
     />
   );
