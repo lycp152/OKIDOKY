@@ -7,23 +7,24 @@ import "hardhat/console.sol";
 contract OKIDOKY {
 
     /*
-    * NewAlarmイベントの作成
+    * AlarmStopイベントの作成
     */
-    event NewAlarm(address indexed from, uint256 timestamp, string message);
+    event AlarmStop(address indexed from, uint256 timestamp, string message);
 
     /*
      * ユーザーが送信したAlarmの情報
      */
     struct Alarm {
-        address alarmer; // Alarmを送ったユーザーのアドレス
+        address user; // Alarmを送ったユーザーのアドレス
         string message; // ユーザーが送ったメッセージ
         uint256 timestamp; // ユーザーがAlarmを送った瞬間のタイムスタンプ
     }
 
     /*
+     * 構造体の配列を格納するための変数alarmsを宣言する
      * ユーザーが送ってきた最新のAlarmを保持する
      */
-    Alarm private _latestAlarm;
+    Alarm[] private _alarms;
 
     constructor() {
         console.log("OKIDOKY - Smart Contract!");
@@ -37,18 +38,18 @@ contract OKIDOKY {
         console.log("%s alarmed w/ message %s", msg.sender, _message);
 
         /*
-         * Alarmとメッセージを格納する
+         * Alarmとメッセージを配列に格納する
          */
-        _latestAlarm = Alarm(msg.sender, _message, block.timestamp);
+        _alarms.push(Alarm(msg.sender, _message, block.timestamp));
 
         /*
          * コントラクト側でemitされたイベントに関する通知をフロントエンドで取得する
          */
-        emit NewAlarm(msg.sender, block.timestamp, _message);
+        emit AlarmStop(msg.sender, block.timestamp, _message);
     }
 
-    function getLatestAlarm() public view returns (Alarm memory) {
-        return _latestAlarm;
+    function getAlarmHistory() public view returns (Alarm[] memory) {
+        return _alarms;
     }
 
 }
