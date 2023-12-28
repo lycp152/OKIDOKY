@@ -1,64 +1,19 @@
-import { ethers } from "ethers";
-import React, { FC, useState } from "react";
-import { buttonStyle } from "../style/buttonStyle";
+import React, { FC } from "react";
+import { buttonStyle } from "../../style/buttonStyle";
 
 type Props = {
   currentAccount: string;
-  contractAddress: string;
-  contractABI: any;
+  messageValue: any;
+  setMessageValue: any;
+  writeAlarm: any;
 };
-
-/* 履歴の詳細を表示するコンポーネント */
-interface AlarmDetailsProps {
-  title: string;
-  value: string;
-}
-
-const AlarmDetails: React.FC<AlarmDetailsProps> = ({ title, value }) => (
-  <div className="py-3 px-4 block w-full border-gray-200 rounded-lg dark:bg-slate-900 dark:border-gray-700 dark:text-gray-100">
-    <div>
-      <p className="font-semibold">{title}</p>
-      <p>{value}</p>
-    </div>
-  </div>
-);
 
 export const SetAlarmContainer: FC<Props> = ({
   currentAccount,
-  contractAddress,
-  contractABI,
+  messageValue,
+  setMessageValue,
+  writeAlarm,
 }) => {
-  /* ユーザーのメッセージを保存するために使用する状態変数 */
-  const [messageValue, setMessageValue] = useState<string>("");
-
-  /* ABIを読み込み、コントラクトに送金する（まだ途中） */
-  const writeAlarm = async () => {
-    try {
-      const { ethereum } = window as any;
-      if (ethereum) {
-        const provider = new ethers.BrowserProvider(ethereum);
-        const signer = await provider.getSigner();
-        /* ABIを参照する */
-        const okidokyContract = new ethers.Contract(
-          contractAddress,
-          contractABI,
-          signer
-        );
-        /* コントラクトにAlarmを書き込む */
-        const alarmTxn = await okidokyContract.writeAlarm(messageValue, {
-          gasLimit: 300000,
-        });
-        console.log("Mining...", alarmTxn.hash);
-        await alarmTxn.wait();
-        console.log("Mined -- ", alarmTxn.hash);
-      } else {
-        console.log("Ethereum object doesn't exist!");
-      }
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
   return (
     <>
       {/* コントラクトに書き込むボタン */}

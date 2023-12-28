@@ -1,19 +1,28 @@
 "use client";
-import { useAppState } from "@/features/state";
-import { HistoryContainer } from "@/features/history/HistoryContainer";
-import { SetAlarmContainer } from "@/features/setAlarm/SetAlarmContainer";
-import { ConnectWalletContainer } from "@/features/connectWallet/ConnectWalletContainer";
+import React, { FC } from "react";
+import { HistoryContainer } from "@/features/components/history/History";
+import { SetAlarmContainer } from "@/features/components/setAlarm/SetAlarm";
+import { ConnectWalletContainer } from "@/features/components/connectWallet/ConnectWallet";
 
-export default function PageView() {
-  const {
-    currentAccount,
-    setCurrentAccount,
-    alarmHistory,
-    setAlarmHistory,
-    contractAddress,
-    contractABI,
-  } = useAppState();
+type Props = {
+  currentAccount: string;
+  connectWallet: any;
+  messageValue: any;
+  setMessageValue: any;
+  writeAlarm: any;
+  isExistLogs: any;
+  alarmHistory: { address: any; timestamp: Date; message: any }[];
+};
 
+export const PageView: FC<Props> = ({
+  currentAccount,
+  connectWallet,
+  messageValue,
+  setMessageValue,
+  writeAlarm,
+  isExistLogs,
+  alarmHistory,
+}) => {
   return (
     <div className="flex min-h-full flex-col justify-center px-6 py-12 lg:px-8">
       {/* ヘッダー */}
@@ -28,24 +37,19 @@ export default function PageView() {
       <div className="sm:mx-auto sm:w-full sm:max-w-lg space-y-6">
         <ConnectWalletContainer
           currentAccount={currentAccount}
-          setCurrentAccount={setCurrentAccount}
-          contractAddress={contractAddress}
-          contractABI={contractABI}
-          setAlarmHistory={setAlarmHistory}
+          connectWallet={connectWallet}
         />
         <SetAlarmContainer
           currentAccount={currentAccount}
-          contractAddress={contractAddress}
-          contractABI={contractABI}
+          messageValue={messageValue}
+          setMessageValue={setMessageValue}
+          writeAlarm={writeAlarm}
         />
         <HistoryContainer
-          currentAccount={currentAccount}
-          contractAddress={contractAddress}
-          contractABI={contractABI}
+          isExistLogs={isExistLogs}
           alarmHistory={alarmHistory}
-          setAlarmHistory={setAlarmHistory}
         />
       </div>
     </div>
   );
-}
+};
